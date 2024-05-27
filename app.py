@@ -34,10 +34,10 @@ def addData(df: pd.DataFrame, data):
     return indf
 
 logger.info("Call market stream")
-thStopEvent = threading.Event()
 queue = Queue()
-market = StreamMarket(queue, thStopEvent)
+market = StreamMarket(queue)
 th = threading.Thread(target=lambda: asyncio.run(market.getMarket()))
+th.daemon = True
 th.start()
 try:
     while not th.is_alive():
@@ -53,7 +53,5 @@ try:
         print(df)
 except KeyboardInterrupt:
     logger.info("KeyboardInterrupt")
-    thStopEvent.set()
-    th.join()
 
 logger.info("The End")

@@ -8,10 +8,9 @@ logger = logging.getLogger(__name__)
 
 class StreamMarket:
 
-    def __init__(self, queue: Queue, thStopEvent: Event, symbols: list = ["BTC", "ETH"]):
+    def __init__(self, queue: Queue, symbols: list = ["BTC", "ETH"]):
         self.idmap = self.__loadIDMap()
         self.queue = queue
-        self.stopEvent = thStopEvent
         self.symbols = self.__makeSymbolsString(symbols)
         pass
 
@@ -51,7 +50,7 @@ class StreamMarket:
                 ],
             }
             await websocket.send(json.dumps(payload))
-            while not self.stopEvent.is_set():
+            while True:
                 message = await websocket.recv()
                 logger.debug(f"Get new message: {message}")
                 data = json.loads(message)
@@ -71,11 +70,4 @@ class StreamMarket:
                     self.queue.put(coin_data)
                 except KeyError as e:
                     logger.warning(f"Error parsing message: {e}")
-                    pass
-        logger.info("Stopping market stream")
-
-    def stop(self):
-        logger.info("Stopping market stream")
-        self.loop = False
-        self.threadrunning = False
-        pass
+                    pass 
