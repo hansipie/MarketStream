@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 class StreamMarket:
 
     def __init__(self, queue: Queue, symbols: list = ["BTC", "ETH"]):
-        self.idmap = self.__loadIDMap()
-        self.queue = queue
-        self.symbols = self.__makeSymbolsString(symbols)
+        self.__idmap = self.__loadIDMap()
+        self.__queue = queue
+        self.__symbols = self.__makeSymbolsString(symbols)
         pass
 
     def __loadIDMap(self):
@@ -19,13 +19,13 @@ class StreamMarket:
         return idmap
 
     def __getCoinName(self, id: int):
-        return [item["name"] for item in self.idmap["data"] if item["id"] == id]
+        return [item["name"] for item in self.__idmap["data"] if item["id"] == id]
     
     def __getCoinSymbol(self, id: int):
-        return [item["symbol"] for item in self.idmap["data"] if item["id"] == id]
+        return [item["symbol"] for item in self.__idmap["data"] if item["id"] == id]
     
     def __getCoinID(self, symbol: str):
-        return [item["id"] for item in self.idmap["data"] if item["symbol"] == symbol]
+        return [item["id"] for item in self.__idmap["data"] if item["symbol"] == symbol]
     
     def __makeSymbolsString(self, symbols: list) -> str:
         if not symbols:
@@ -37,7 +37,7 @@ class StreamMarket:
         str_ids = [str(id) for id in list]
         logger.debug(f"Symbols string: {','.join(str_ids)}")
         return ",".join(str_ids)
-
+    
     async def getMarket(self):
         logger.info("Starting market stream")
         uri = "wss://push.coinmarketcap.com/ws?device=web&client_source=home_page"
@@ -46,7 +46,7 @@ class StreamMarket:
                 "method": "RSUBSCRIPTION",
                 "params": [
                     "main-site@crypto_price_5s@{}@normal",
-                    self.symbols,
+                    self.__symbols,
                 ],
             }
             await websocket.send(json.dumps(payload))
@@ -67,7 +67,7 @@ class StreamMarket:
                         "price": price,
                     }
                     logger.debug(f"Put new data: {coin_data}")
-                    self.queue.put(coin_data)
+                    self.__queue.put(coin_data)
                 except KeyError as e:
                     logger.warning(f"Error parsing message: {e}")
                     pass 
