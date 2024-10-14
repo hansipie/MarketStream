@@ -42,6 +42,7 @@ def threadLauncher():
 
 def addData(data):
     # update df dataframe with new data
+    logger.debug(f"Data to add: {data}")
     new_data = pd.DataFrame(data).set_index("name")
     if st.session_state.data.empty:
         st.session_state.data = new_data
@@ -62,7 +63,7 @@ def updateDataframe():
         logger.error(f"Error: {e}")
     finally:
         logger.debug("Dataframe updated")
-        st.dataframe(st.session_state.data)
+        st.dataframe(st.session_state.data, use_container_width=True)
     
 threadLauncher()
 updateDataframe()

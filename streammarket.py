@@ -49,25 +49,35 @@ class StreamMarket:
                     self.__symbols,
                 ],
             }
-            await websocket.send(json.dumps(payload))
-            while True:
-                message = await websocket.recv()
-                logger.debug(f"Get new message: {message}")
-                data = json.loads(message)
-                if 't' not in data:
-                    logger.debug(f"Skip message: {data}")
-                    continue
-                try:
-                    unix_timestamp = int(data["t"])
-                    price = float(data["d"]["p"])
-                    coin_data = {
-                        "name": self.__getCoinName(data["d"]["id"]),
-                        "symbol": self.__getCoinSymbol(data["d"]["id"]),
-                        "timestamp": unix_timestamp,
-                        "price": price,
-                    }
-                    logger.debug(f"Put new data: {coin_data}")
-                    self.__queue.put(coin_data)
-                except KeyError as e:
-                    logger.warning(f"Error parsing message: {e}")
-                    pass 
+            try:
+                await websocket.send(json.dumps(payload))
+                while True:
+                    message = await websocket.recv()
+                    logger.debug(f"Get new message: {message}")
+                    data = json.loads(message)
+                    if 't' not in data:
+                        logger.debug(f"Skip message: {data}")
+                        continue
+                    try:
+                        unix_timestamp = int(data["t"])
+                        price = float(data["d"]["p"])
+                        coin_data = {
+                            "name": self.__getCoinName(data["d"]["id"]),
+                            "symbol": self.__getCoinSymbol(data["d"]["id"]),
+                            "timestamp": unix_timestamp,
+                            "price": price,
+                        }
+                        logger.debug(f"Put new data: {coin_data}")
+                        self.__queue.put(coin_data)
+                    except KeyError as e:
+                        logger.warning(f"Error parsing message: {e}")
+                        pass
+            except websockets.exceptions.ConnectionClosedError as e:
+                logger.error(f"Connection closed: {e}")
+                pass 
+            except KeyboardInterrupt:
+                logger.info("Stopping market stream")
+                pass
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                pass
