@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class StreamMarket:
 
-    def __init__(self, queue: Queue, symbols: list = ["BTC", "ETH"]):
+    def __init__(self, queue: Queue, symbols: list = ["BTC", "ETH", "SOL"]):
         self.__idmap = self.__loadIDMap()
         self.__queue = queue
         self.__symbols = self.__makeSymbolsString(symbols)
