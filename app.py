@@ -52,7 +52,7 @@ def addData(data):
         else:
             st.session_state.data = pd.concat([st.session_state.data, new_data])
 
-@st.experimental_fragment(run_every=1)
+@st.fragment(run_every=1)
 def updateDataframe():
     try:
         queue = st.session_state.queue

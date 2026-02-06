@@ -1,31 +1,55 @@
-## MarketStream
-This project is a Python application that uses websockets, multithreading and queues to fetch and process real-time market data.
+# MarketStream
 
-## Description
-The `app.py` file contains the main code of the application. It starts by creating a queue and a StreamMarket object that uses this queue to communicate market data. A daemon thread is launched to run the getMarket method of the StreamMarket object in the background.
+Application Python qui streame en temps réel les prix des cryptomonnaies depuis l'API WebSocket de CoinMarketCap. Elle utilise les websockets, le multithreading et les queues pour récupérer et afficher les données de marché.
 
-Next, the application enters a main loop where it checks if the thread is still alive and if the queue is not empty. If so, it retrieves the data from the queue, adds it to a pandas DataFrame, and displays the DataFrame.
+## Architecture
 
-If a keyboard interrupt is detected (for example, if the user presses Ctrl+C), the application terminates gracefully.
+L'application suit un modèle producteur/consommateur :
+
+- **`streammarket.py`** — Classe `StreamMarket` (producteur) : se connecte au WebSocket `wss://push.coinmarketcap.com`, s'abonne aux mises à jour de prix et alimente une `Queue` avec des données structurées (nom, symbole, timestamp, prix).
+- **`app.py`** — Interface web Streamlit (consommateur) : lance le WebSocket dans un thread daemon, poll la queue chaque seconde et affiche les données dans un tableau dynamique.
+- **`main_cli.py`** — Interface CLI via Typer (consommateur) : même principe avec affichage dans le terminal et export CSV.
 
 ## Installation
-To install this project, you need to have Python installed on your machine. You can then clone this repository and install the necessary dependencies with pip:
 
-```bash	
+```bash
 git clone <repository url>
-cd <repository name>
-pip install -r requirements.txt
+cd MarketStream
+uv sync
 ```
 
-## Usage
-To run the application, navigate to the project directory in your terminal and run the app.py file with Python:
+## Utilisation
 
-```bash	
-python app.py
+### Interface web (Streamlit)
+
+```bash
+uv run streamlit run app.py
 ```
 
-## Contribution
-Contributions to this project are welcome. If you wish to contribute, please fork the repository, make your changes, and submit a pull request.
+### CLI
 
-## License
-This project is licensed under MIT license. For more information, please see the LICENSE file in the main project directory.
+```bash
+uv run python main_cli.py --token "BTC,ETH" --ouputfile output.csv
+```
+
+Options CLI :
+- `--token` : liste de symboles séparés par des virgules (défaut : `BTC,ETH`)
+- `--ouputfile` : chemin du fichier CSV de sortie (défaut : `output.csv`)
+
+## Dépendances
+
+Les dépendances sont gérées avec [uv](https://docs.astral.sh/uv/) via `pyproject.toml` :
+- `streamlit` — interface web
+- `websockets` — connexion WebSocket
+- `pandas` — manipulation des données
+- `typer` — interface CLI
+
+Pour ajouter une dépendance :
+
+```bash
+uv add <package>
+```
+
+## Licence
+
+Ce projet est sous licence MIT.
