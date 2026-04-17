@@ -13,7 +13,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 def addData(df: pd.DataFrame, data):
-    # update df dataframe with new data
     indf = df.copy()
     new_data = pd.DataFrame([data]).set_index("name")
     if indf.empty:

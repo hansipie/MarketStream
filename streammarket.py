@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 
 class StreamMarket:
 
-    def __init__(self, queue: Queue, symbols: list = None):
-        self.__idmap = self.__loadIDMap()
-        self.__by_id = {item["id"]: item for item in self.__idmap["data"]}
-        self.__by_symbol = {item["symbol"]: item["id"] for item in self.__idmap["data"]}
+    def __init__(self, queue: Queue, symbols: list[str] | None = None):
+        idmap = self.__loadIDMap()
+        self.__by_id = {item["id"]: item for item in idmap["data"]}
+        self.__by_symbol = {item["symbol"]: item["id"] for item in idmap["data"]}
         self.__queue = queue
         self.__symbols = self.__makeSymbolsString(symbols or ["BTC", "ETH", "SOL"])
 
@@ -21,17 +21,17 @@ class StreamMarket:
             idmap = json.load(f)
         return idmap
 
-    def __getCoinName(self, id: int) -> str:
-        return self.__by_id.get(id, {}).get("name", "")
+    def __getCoinName(self, coin_id: int) -> str:
+        return self.__by_id.get(coin_id, {}).get("name", "")
 
-    def __getCoinSymbol(self, id: int) -> str:
-        return self.__by_id.get(id, {}).get("symbol", "")
+    def __getCoinSymbol(self, coin_id: int) -> str:
+        return self.__by_id.get(coin_id, {}).get("symbol", "")
 
-    def __getCoinID(self, symbol: str) -> list:
+    def __getCoinID(self, symbol: str) -> list[int]:
         coin_id = self.__by_symbol.get(symbol)
         return [coin_id] if coin_id is not None else []
     
-    def __makeSymbolsString(self, symbols: list) -> str:
+    def __makeSymbolsString(self, symbols: list[str]) -> str:
         if not symbols:
             return ""
         ids = []
