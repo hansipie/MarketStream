@@ -43,21 +43,6 @@ Options CLI :
 - `--token` : liste de symboles séparés par des virgules (optionnel, défaut : top 20 auto-scrappés)
 - `--outputfile` : chemin du fichier CSV de sortie (défaut : `output.csv`)
 
-## Dépendances
-
-Les dépendances sont gérées avec [uv](https://docs.astral.sh/uv/) via `pyproject.toml` :
-- `streamlit` — interface web
-- `websockets` — connexion WebSocket
-- `pandas` — manipulation des données
-- `typer` — interface CLI
-- `beautifulsoup4` — scraping des tokens depuis CoinMarketCap
-- `requests` — requêtes HTTP pour le scraping
-
-Pour ajouter une dépendance :
-
-```bash
-uv add <package>
-```
 
 ## Licence
 
