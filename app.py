@@ -7,6 +7,7 @@ import asyncio
 from queue import Queue
 
 from streammarket import StreamMarket
+from scraper import get_top_tokens
 
 dbg_lvl = logging.DEBUG
 logger = logging.getLogger()
@@ -21,8 +22,14 @@ if "data" not in st.session_state:
     st.session_state.data = pd.DataFrame()
 if "queue" not in st.session_state:
     st.session_state.queue = Queue()
+if "tokens" not in st.session_state:
+    # Scrape tokens on first load
+    logger.info("Fetching tokens from CoinMarketCap...")
+    st.session_state.tokens = get_top_tokens(limit=20)
+    logger.info(f"Using tokens: {st.session_state.tokens}")
 
 st.title("Market Stream")
+st.caption(f"Tracking {len(st.session_state.tokens)} tokens: {', '.join(st.session_state.tokens[:10])}{'...' if len(st.session_state.tokens) > 10 else ''}")
 
 def threadLauncher():
     for thread in threading.enumerate():
@@ -30,7 +37,7 @@ def threadLauncher():
             logger.info("Thread is already running")
             break
     else:
-        market = StreamMarket(st.session_state.queue)
+        market = StreamMarket(st.session_state.queue, st.session_state.tokens)
         th = threading.Thread(target=lambda: asyncio.run(market.getMarket()), name="MarketStream")
         th.daemon = True
         th.start()

@@ -3,9 +3,11 @@ from queue import Queue
 import time
 import pandas as pd
 from streammarket import StreamMarket
+from scraper import get_top_tokens
 import logging
 import threading
 import typer
+from typing import Optional
 
 dbg_lvl = logging.INFO
 logger = logging.getLogger()
@@ -30,10 +32,25 @@ def addData(df: pd.DataFrame, data):
             indf = pd.concat([indf, new_data])
     return indf
 
-def runnner(token: str = "BTC,ETH", ouputfile: str = "output.csv"):
+def runnner(
+    token: Optional[str] = typer.Option(None, help="Comma-separated list of tokens (e.g., BTC,ETH). If not provided, fetches top tokens from CoinMarketCap."), 
+    ouputfile: str = "output.csv"
+):
+    """
+    Stream cryptocurrency prices from CoinMarketCap WebSocket.
+    """
+    # If no tokens provided, scrape from CoinMarketCap
+    if token is None:
+        logger.info("No tokens specified, fetching from CoinMarketCap...")
+        tokens = get_top_tokens(limit=20)
+        logger.info(f"Using top {len(tokens)} tokens: {', '.join(tokens)}")
+    else:
+        tokens = token.split(",")
+        logger.info(f"Using specified tokens: {', '.join(tokens)}")
+    
     logger.info("Call market stream")
     queue = Queue()
-    market = StreamMarket(queue, token.split(","))
+    market = StreamMarket(queue, tokens)
     th = threading.Thread(target=lambda: asyncio.run(market.getMarket()))
     th.daemon = True
     th.start()
