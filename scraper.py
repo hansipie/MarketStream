@@ -5,6 +5,8 @@ import re
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_TOKENS = ["BTC", "ETH", "USDT", "BNB", "SOL", "XRP", "USDC", "ADA", "DOGE", "TRX"]
+
 def get_top_tokens(limit: int = 20) -> list[str]:
     """
     Scrape the CoinMarketCap homepage to get the top tokens displayed.
@@ -35,12 +37,12 @@ def get_top_tokens(limit: int = 20) -> list[str]:
         links = soup.find_all('a', href=lambda x: x and x.startswith('/currencies/') and x.endswith('/') and '#' not in x)
         
         for link in links:
-            url = link.get('href')
-            
+            href = link.get('href')
+
             # Skip if we've already seen this coin URL
-            if url in seen_urls:
+            if href in seen_urls:
                 continue
-            seen_urls.add(url)
+            seen_urls.add(href)
             
             full_text = link.get_text(strip=True)
             
@@ -51,9 +53,9 @@ def get_top_tokens(limit: int = 20) -> list[str]:
             if match:
                 symbol = match.group(1)
                 
-                # Check if the symbol appears twice at the end (e.g., "BNBBNB")
-                # If so, take only half
-                if len(symbol) % 2 == 0:
+                # Check if the symbol appears twice at the end (e.g., "BNBBNB" → "BNB")
+                # Only apply when len > 5 to avoid incorrectly halving real symbols like "ABAB"
+                if len(symbol) > 5 and len(symbol) % 2 == 0:
                     half = len(symbol) // 2
                     if symbol[:half] == symbol[half:]:
                         symbol = symbol[:half]
@@ -71,10 +73,10 @@ def get_top_tokens(limit: int = 20) -> list[str]:
         logger.error(f"Error fetching data from CoinMarketCap: {e}")
         # Return default tokens as fallback
         logger.warning("Using default tokens as fallback")
-        return ["BTC", "ETH", "USDT", "BNB", "SOL", "XRP", "USDC", "ADA", "DOGE", "TRX"]
+        return DEFAULT_TOKENS
     except Exception as e:
         logger.error(f"Unexpected error while scraping: {e}")
-        return ["BTC", "ETH", "USDT", "BNB", "SOL", "XRP", "USDC", "ADA", "DOGE", "TRX"]
+        return DEFAULT_TOKENS
 
 
 if __name__ == "__main__":

@@ -35,9 +35,13 @@ def threadLauncher():
         th = threading.Thread(target=lambda: asyncio.run(market.getMarket()), name="MarketStream")
         th.daemon = True
         th.start()
-        while not th.is_alive():
-            logger.info("Thread is not alive, let's wait a bit")
+        for _ in range(5):
+            if th.is_alive():
+                break
             time.sleep(1)
+        else:
+            logger.error("MarketStream thread failed to start")
+            return
         logger.info("Thread is alive, let's get data")
 
 
@@ -57,9 +61,9 @@ def addData(data):
 def updateDataframe():
     try:
         queue = st.session_state.queue
-        if not queue.empty():
+        while not queue.empty():
             logger.debug(f"Queue size: {queue.qsize()}")
-            addData(queue.get())
+            addData(queue.get_nowait())
     except Exception as e:
         logger.error(f"Error: {e}")
     finally:

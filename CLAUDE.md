@@ -22,7 +22,7 @@ L'application récupère automatiquement les top 20 tokens depuis la homepage de
 
 ### Run the CLI
 ```bash
-uv run python main_cli.py --token "BTC,ETH" --ouputfile output.csv
+uv run python main_cli.py --token "BTC,ETH" --outputfile output.csv
 ```
 
 Si vous ne spécifiez pas `--token`, l'application récupère automatiquement les top 20 tokens depuis la homepage de CoinMarketCap :
@@ -30,7 +30,6 @@ Si vous ne spécifiez pas `--token`, l'application récupère automatiquement le
 uv run python main_cli.py
 ```
 
-Note: the parameter is `--ouputfile` (typo in codebase, missing 't').
 
 ## Architecture
 
