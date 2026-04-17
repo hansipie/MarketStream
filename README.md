@@ -43,6 +43,8 @@ Les dépendances sont gérées avec [uv](https://docs.astral.sh/uv/) via `pyproj
 - `websockets` — connexion WebSocket
 - `pandas` — manipulation des données
 - `typer` — interface CLI
+- `beautifulsoup4` — scraping des tokens depuis CoinMarketCap
+- `requests` — requêtes HTTP pour le scraping
 
 Pour ajouter une dépendance :
 
