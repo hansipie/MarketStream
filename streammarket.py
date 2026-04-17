@@ -12,7 +12,10 @@ class StreamMarket:
     def __init__(self, queue: Queue, symbols: list[str] | None = None):
         idmap = self.__loadIDMap()
         self.__by_id = {item["id"]: item for item in idmap["data"]}
-        self.__by_symbol = {item["symbol"]: item["id"] for item in idmap["data"]}
+        self.__by_symbol = {}
+        for item in sorted(idmap["data"], key=lambda x: x["rank"]):
+            if item["symbol"] not in self.__by_symbol:
+                self.__by_symbol[item["symbol"]] = item["id"]
         self.__queue = queue
         self.__symbols = self.__makeSymbolsString(symbols or ["BTC", "ETH", "SOL"])
 
@@ -36,7 +39,10 @@ class StreamMarket:
             return ""
         ids = []
         for symbol in symbols:
-            ids.extend(self.__getCoinID(symbol))
+            found = self.__getCoinID(symbol)
+            if not found:
+                logger.warning(f"Symbol not found in idmap: {symbol}")
+            ids.extend(found)
         str_ids = [str(i) for i in ids]
         logger.debug(f"Symbols string: {','.join(str_ids)}")
         return ",".join(str_ids)
@@ -67,9 +73,15 @@ class StreamMarket:
                         try:
                             unix_timestamp = int(data["t"])
                             price = float(data["d"]["p"])
+                            coin_id = data["d"]["id"]
+                            name = self.__getCoinName(coin_id)
+                            symbol = self.__getCoinSymbol(coin_id)
+                            if not name:
+                                logger.warning(f"Unknown coin id from websocket: {coin_id}")
+                                continue
                             coin_data = {
-                                "name": self.__getCoinName(data["d"]["id"]),
-                                "symbol": self.__getCoinSymbol(data["d"]["id"]),
+                                "name": name,
+                                "symbol": symbol,
                                 "timestamp": unix_timestamp,
                                 "price": price,
                             }

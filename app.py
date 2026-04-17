@@ -67,7 +67,11 @@ def updateDataframe():
         logger.error(f"Error: {e}")
     finally:
         logger.debug("Dataframe updated")
-        st.dataframe(st.session_state.data, use_container_width=True)
+        df = st.session_state.data
+        row_height = 35
+        header_height = 38
+        height = header_height + row_height * len(df)
+        st.dataframe(df, width='stretch', height=height)
     
 threadLauncher()
 updateDataframe()
