@@ -3,6 +3,7 @@ import websockets
 from queue import Queue
 import logging
 from threading import Event
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -15,14 +16,17 @@ class StreamMarket:
         pass
 
     def __loadIDMap(self):
-        idmap = json.loads(open("./data/cmc_idmap.json", encoding="UTF-8").read())
+        with open(Path(__file__).parent / "data" / "cmc_idmap.json", encoding="UTF-8") as f:
+            idmap = json.load(f)
         return idmap
 
-    def __getCoinName(self, id: int):
-        return [item["name"] for item in self.__idmap["data"] if item["id"] == id]
-    
-    def __getCoinSymbol(self, id: int):
-        return [item["symbol"] for item in self.__idmap["data"] if item["id"] == id]
+    def __getCoinName(self, id: int) -> str:
+        matches = [item["name"] for item in self.__idmap["data"] if item["id"] == id]
+        return matches[0] if matches else ""
+
+    def __getCoinSymbol(self, id: int) -> str:
+        matches = [item["symbol"] for item in self.__idmap["data"] if item["id"] == id]
+        return matches[0] if matches else ""
     
     def __getCoinID(self, symbol: str):
         return [item["id"] for item in self.__idmap["data"] if item["symbol"] == symbol]

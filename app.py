@@ -9,14 +9,8 @@ from queue import Queue
 from streammarket import StreamMarket
 from scraper import get_top_tokens
 
-dbg_lvl = logging.DEBUG
-logger = logging.getLogger()
-logger.setLevel(dbg_lvl)
-handler = logging.StreamHandler()
-handler.setLevel(dbg_lvl)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 if "data" not in st.session_state:
     st.session_state.data = pd.DataFrame()
@@ -50,7 +44,7 @@ def threadLauncher():
 def addData(data):
     # update df dataframe with new data
     logger.debug(f"Data to add: {data}")
-    new_data = pd.DataFrame(data).set_index("name")
+    new_data = pd.DataFrame([data]).set_index("name")
     if st.session_state.data.empty:
         st.session_state.data = new_data
     else:

@@ -9,14 +9,8 @@ import threading
 import typer
 from typing import Optional
 
-dbg_lvl = logging.INFO
-logger = logging.getLogger()
-logger.setLevel(dbg_lvl)
-handler = logging.StreamHandler()
-handler.setLevel(dbg_lvl)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 def addData(df: pd.DataFrame, data):
     # update df dataframe with new data
@@ -62,7 +56,10 @@ def runnner(
 
         df = pd.DataFrame()
         while th.is_alive() or not queue.empty():
-            data = queue.get()
+            try:
+                data = queue.get(timeout=2)
+            except Exception:
+                continue
             logger.info(f"Get data: {data}")
             df = addData(df, data)
             print(df)
