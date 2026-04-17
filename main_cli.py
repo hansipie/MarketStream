@@ -1,5 +1,5 @@
 import asyncio
-from queue import Queue
+from queue import Queue, Empty
 import time
 import pandas as pd
 from streammarket import StreamMarket
@@ -9,20 +9,12 @@ import threading
 import typer
 from typing import Optional
 
-dbg_lvl = logging.INFO
-logger = logging.getLogger()
-logger.setLevel(dbg_lvl)
-handler = logging.StreamHandler()
-handler.setLevel(dbg_lvl)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 def addData(df: pd.DataFrame, data):
-    # update df dataframe with new data
-    indf = pd.DataFrame(df)
-    new_data = pd.DataFrame(data)
-    new_data = new_data.set_index("name")
+    indf = df.copy()
+    new_data = pd.DataFrame([data]).set_index("name")
     if indf.empty:
         indf = new_data
     else:
@@ -32,9 +24,9 @@ def addData(df: pd.DataFrame, data):
             indf = pd.concat([indf, new_data])
     return indf
 
-def runnner(
+def runner(
     token: Optional[str] = typer.Option(None, help="Comma-separated list of tokens (e.g., BTC,ETH). If not provided, fetches top tokens from CoinMarketCap."), 
-    ouputfile: str = "output.csv"
+    outputfile: str = "output.csv"
 ):
     """
     Stream cryptocurrency prices from CoinMarketCap WebSocket.
@@ -51,26 +43,33 @@ def runnner(
     logger.info("Call market stream")
     queue = Queue()
     market = StreamMarket(queue, tokens)
-    th = threading.Thread(target=lambda: asyncio.run(market.getMarket()))
+    th = threading.Thread(target=lambda: asyncio.run(market.getMarket()), name="MarketStream")
     th.daemon = True
     th.start()
     try:
-        while not th.is_alive():
-            logger.info("Thread is not alive, let's wait a bit")
+        for _ in range(5):
+            if th.is_alive():
+                break
             time.sleep(1)
+        else:
+            logger.error("MarketStream thread failed to start")
+            return
         logger.info("Thread is alive, let's get data")
 
         df = pd.DataFrame()
         while th.is_alive() or not queue.empty():
-            data = queue.get()
+            try:
+                data = queue.get(timeout=2)
+            except Empty:
+                continue
             logger.info(f"Get data: {data}")
             df = addData(df, data)
             print(df)
-            df.to_csv(ouputfile)
+            df.to_csv(outputfile)
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt")
 
     logger.info("The End")
 
 if __name__ == "__main__":
-    typer.run(runnner)
+    typer.run(runner)

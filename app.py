@@ -9,14 +9,8 @@ from queue import Queue
 from streammarket import StreamMarket
 from scraper import get_top_tokens
 
-dbg_lvl = logging.DEBUG
-logger = logging.getLogger()
-logger.setLevel(dbg_lvl)
-handler = logging.StreamHandler()
-handler.setLevel(dbg_lvl)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 if "data" not in st.session_state:
     st.session_state.data = pd.DataFrame()
@@ -41,16 +35,19 @@ def threadLauncher():
         th = threading.Thread(target=lambda: asyncio.run(market.getMarket()), name="MarketStream")
         th.daemon = True
         th.start()
-        while not th.is_alive():
-            logger.info("Thread is not alive, let's wait a bit")
+        for _ in range(5):
+            if th.is_alive():
+                break
             time.sleep(1)
+        else:
+            logger.error("MarketStream thread failed to start")
+            return
         logger.info("Thread is alive, let's get data")
 
 
 def addData(data):
-    # update df dataframe with new data
     logger.debug(f"Data to add: {data}")
-    new_data = pd.DataFrame(data).set_index("name")
+    new_data = pd.DataFrame([data]).set_index("name")
     if st.session_state.data.empty:
         st.session_state.data = new_data
     else:
@@ -63,17 +60,18 @@ def addData(data):
 def updateDataframe():
     try:
         queue = st.session_state.queue
-        if not queue.empty():
+        while not queue.empty():
             logger.debug(f"Queue size: {queue.qsize()}")
-            addData(queue.get())
+            addData(queue.get_nowait())
     except Exception as e:
         logger.error(f"Error: {e}")
     finally:
         logger.debug("Dataframe updated")
-        st.dataframe(st.session_state.data, use_container_width=True)
+        df = st.session_state.data
+        row_height = 35
+        header_height = 38
+        height = header_height + row_height * len(df)
+        st.dataframe(df, width='stretch', height=height)
     
 threadLauncher()
 updateDataframe()
-
-
-
